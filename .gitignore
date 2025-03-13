@@ -1,0 +1,9 @@
+# Bỏ qua tất cả các file runtime của MariaDB/MySQL
+docker-persistence/mariadb/
+docker-persistence/mysql/
+*.sock
+*.pid
+*.cnf
+*.index
+*.frm
+*.ibd
