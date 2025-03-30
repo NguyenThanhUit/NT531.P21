@@ -19,9 +19,12 @@ services:
       - influxdb2-admin-password
       - influxdb2-admin-token
     volumes:
-      - influxdb2-data:/var/lib/influxdb2
-      - influxdb2-config:/etc/influxdb2
-
+      - type: volume
+        source: influxdb2-data
+        target: /var/lib/influxdb2
+      - type: volume
+        source: influxdb2-config
+        target: /etc/influxdb2
   grafana:
     image: grafana/grafana
     container_name: grafana
@@ -30,13 +33,15 @@ services:
       my-network:
         ipv4_address: 172.16.0.3
     ports:
-      - '3000:3000'
+     - '3000:3000'
+    volumes:
       - grafana-storage:/var/lib/grafana
-
-
   db:
     image: mariadb:10
     container_name: librenms_db
+    networks:
+      my-network:
+        ipv4_address: 172.16.0.4
     command:
       - "mysqld"
       - "--innodb-file-per-table=1"
@@ -50,19 +55,16 @@ services:
       - "MYSQL_DATABASE=${MYSQL_DATABASE}"
       - "MYSQL_USER=${MYSQL_USER}"
       - "MYSQL_PASSWORD=${MYSQL_PASSWORD}"
-    networks:
-      my-network:
-        ipv4_address: 172.16.0.4
     restart: always
 
   redis:
     image: redis:7.2-alpine
     container_name: librenms_redis
-    environment:
-      - "TZ=${TZ}"
     networks:
       my-network:
         ipv4_address: 172.16.0.5
+    environment:
+      - "TZ=${TZ}"
     restart: always
 
   msmtpd:
@@ -83,7 +85,9 @@ services:
       - NET_ADMIN
       - NET_RAW
     ports:
-      - 8000:8000
+      - target: 8000
+        published: 8000
+        protocol: tcp
     depends_on:
       - db
       - redis
@@ -92,10 +96,19 @@ services:
       - "./librenms:/data"
     env_file:
       - "./librenms.env"
-    restart: always
+    environment:
+      - "TZ=${TZ}"
+      - "PUID=${PUID}"
+      - "PGID=${PGID}"
+      - "DB_HOST=db"
+      - "DB_NAME=${MYSQL_DATABASE}"
+      - "DB_USER=${MYSQL_USER}"
+      - "DB_PASSWORD=${MYSQL_PASSWORD}"
+      - "DB_TIMEOUT=60"
     networks:
       my-network:
         ipv4_address: 172.16.0.7
+    restart: always
 
   dispatcher:
     image: librenms/librenms:latest
@@ -111,6 +124,17 @@ services:
       - "./librenms:/data"
     env_file:
       - "./librenms.env"
+    environment:
+      - "TZ=${TZ}"
+      - "PUID=${PUID}"
+      - "PGID=${PGID}"
+      - "DB_HOST=db"
+      - "DB_NAME=${MYSQL_DATABASE}"
+      - "DB_USER=${MYSQL_USER}"
+      - "DB_PASSWORD=${MYSQL_PASSWORD}"
+      - "DB_TIMEOUT=60"
+      - "DISPATCHER_NODE_ID=dispatcher1"
+      - "SIDECAR_DISPATCHER=1"
     restart: always
     networks:
       my-network:
@@ -127,12 +151,26 @@ services:
       - librenms
       - redis
     ports:
-      - 514:514/tcp
-      - 514:514/udp
+      - target: 514
+        published: 514
+        protocol: tcp
+      - target: 514
+        published: 514
+        protocol: udp
     volumes:
       - "./librenms:/data"
     env_file:
       - "./librenms.env"
+    environment:
+      - "TZ=${TZ}"
+      - "PUID=${PUID}"
+      - "PGID=${PGID}"
+      - "DB_HOST=db"
+      - "DB_NAME=${MYSQL_DATABASE}"
+      - "DB_USER=${MYSQL_USER}"
+      - "DB_PASSWORD=${MYSQL_PASSWORD}"
+      - "DB_TIMEOUT=60"
+      - "SIDECAR_SYSLOGNG=1"
     restart: always
     networks:
       my-network:
@@ -149,17 +187,30 @@ services:
       - librenms
       - redis
     ports:
-      - 162:162/tcp
-      - 162:162/udp
+      - target: 162
+        published: 162
+        protocol: tcp
+      - target: 162
+        published: 162
+        protocol: udp
     volumes:
       - "./librenms:/data"
     env_file:
       - "./librenms.env"
-    restart: always
+    environment:
+      - "TZ=${TZ}"
+      - "PUID=${PUID}"
+      - "PGID=${PGID}"
+      - "DB_HOST=db"
+      - "DB_NAME=${MYSQL_DATABASE}"
+      - "DB_USER=${MYSQL_USER}"
+      - "DB_PASSWORD=${MYSQL_PASSWORD}"
+      - "DB_TIMEOUT=60"
+      - "SIDECAR_SNMPTRAPD=1"
     networks:
       my-network:
         ipv4_address: 172.16.0.10
-
+    restart: always
 secrets:
   influxdb2-admin-username:
     file: ./InfluxDb/.env.influxdb2-admin-username
@@ -167,16 +218,9 @@ secrets:
     file: ./InfluxDb/.env.influxdb2-admin-password
   influxdb2-admin-token:
     file: ./InfluxDb/.env.influxdb2-admin-token
-
-
 volumes:
   influxdb2-data:
   influxdb2-config:
-  grafana-storage:
-
-networks:
+  grafana-storage: {}
+networks: 
   my-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.16.0.0/24
