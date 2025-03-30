@@ -1,2 +1,4 @@
-https://discord.com/api/webhooks/1355395600073363678/khzo0Z5CdtlDUXtUmGNe3zxdwk8B79bO7XTZVxZHEL0TQggJ-7xvh54FODhJbXnkb4oj
+TP.DN: 16.03764412776707, 108.13903498082125
+TP.HCM: 10.730332099999638, 106.67043235379343
+TP.HN: 21.020575168113165, 105.83387351849966
 netsh advfirewall firewall add rule name="Allow ICMPv4-In" protocol=icmpv4:8,any dir=in action=allow
