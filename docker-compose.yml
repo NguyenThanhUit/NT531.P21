@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   influxdb2:
@@ -14,7 +13,7 @@ services:
       DOCKER_INFLUXDB_INIT_BUCKET: home
     networks:
       my-network:
-        ipv4_address: 192.168.1.2
+        ipv4_address: 172.16.0.2
     secrets:
       - influxdb2-admin-username
       - influxdb2-admin-password
@@ -29,11 +28,11 @@ services:
     restart: unless-stopped
     networks:
       my-network:
-        ipv4_address: 192.168.1.3
+        ipv4_address: 172.16.0.3
     ports:
       - '3000:3000'
-    volumes:
       - grafana-storage:/var/lib/grafana
+
 
   db:
     image: mariadb:10
@@ -53,7 +52,7 @@ services:
       - "MYSQL_PASSWORD=${MYSQL_PASSWORD}"
     networks:
       my-network:
-        ipv4_address: 192.168.1.4
+        ipv4_address: 172.16.0.4
     restart: always
 
   redis:
@@ -63,7 +62,7 @@ services:
       - "TZ=${TZ}"
     networks:
       my-network:
-        ipv4_address: 192.168.1.5
+        ipv4_address: 172.16.0.5
     restart: always
 
   msmtpd:
@@ -73,7 +72,7 @@ services:
       - "./msmtpd.env"
     networks:
       my-network:
-        ipv4_address: 192.168.1.6
+        ipv4_address: 172.16.0.6
     restart: always
 
   librenms:
@@ -93,10 +92,10 @@ services:
       - "./librenms:/data"
     env_file:
       - "./librenms.env"
+    restart: always
     networks:
       my-network:
-        ipv4_address: 192.168.1.7
-    restart: always
+        ipv4_address: 172.16.0.7
 
   dispatcher:
     image: librenms/librenms:latest
@@ -112,10 +111,10 @@ services:
       - "./librenms:/data"
     env_file:
       - "./librenms.env"
+    restart: always
     networks:
       my-network:
-        ipv4_address: 192.168.1.8
-    restart: always
+        ipv4_address: 172.16.0.8
 
   syslogng:
     image: librenms/librenms:latest
@@ -134,10 +133,10 @@ services:
       - "./librenms:/data"
     env_file:
       - "./librenms.env"
+    restart: always
     networks:
       my-network:
-        ipv4_address: 192.168.1.9
-    restart: always
+        ipv4_address: 172.16.0.9
 
   snmptrapd:
     image: librenms/librenms:latest
@@ -156,10 +155,10 @@ services:
       - "./librenms:/data"
     env_file:
       - "./librenms.env"
+    restart: always
     networks:
       my-network:
-        ipv4_address: 192.168.1.10
-    restart: always
+        ipv4_address: 172.16.0.10
 
 secrets:
   influxdb2-admin-username:
@@ -168,6 +167,7 @@ secrets:
     file: ./InfluxDb/.env.influxdb2-admin-password
   influxdb2-admin-token:
     file: ./InfluxDb/.env.influxdb2-admin-token
+
 
 volumes:
   influxdb2-data:
@@ -179,4 +179,4 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.1.0/24
+        - subnet: 172.16.0.0/24
